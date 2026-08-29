@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undertale Evolution .IO</title>
+    <style>
+        :root {
+            --bg: #111827;
+            --panel: rgba(15, 23, 42, 0.75);
+            --panel-border: rgba(148, 163, 184, 0.25);
+            --accent: #7dd3fc;
+            --accent-2: #34d399;
+            --text: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: #0f172a;
+        }
+
+        .touch-controls {
+            position: absolute;
+            left: 24px;
+            bottom: 24px;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.38);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            box-shadow: inset 0 0 20px rgba(148, 163, 184, 0.05);
+            touch-action: none;
+            z-index: 3;
+            display: block;
+        }
+
+        .touch-pad {
+            position: absolute;
+            inset: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            background: rgba(148, 163, 184, 0.08);
+        }
+
+        .touch-stick {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 42px;
+            height: 42px;
+            margin-left: -21px;
+            margin-top: -21px;
+            border-radius: 50%;
+            background: rgba(125, 211, 252, 0.9);
+            box-shadow: 0 8px 18px rgba(34, 211, 238, 0.35);
+            transition: transform 0.04s linear;
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .stat {
+            min-width: 140px;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .label {
+            display: block;
+            font-size: 12px;
+            opacity: 0.75;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .value {
+            display: block;
+            margin-top: 4px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .touch-controls {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        <div class="stat">
+            <span class="label">Progreso</span>
+            <span id="progressValue" class="value">0 / 100</span>
+        </div>
+        <div class="stat">
+            <span class="label">Nivel</span>
+            <span id="levelValue" class="value">1</span>
+        </div>
+        <div class="stat">
+            <span class="label">Puntos</span>
+            <span id="scoreValue" class="value">0</span>
+        </div>
+    </div>
+
+    <div id="touchControls" class="touch-controls" aria-label="Control de movimiento">
+        <div class="touch-pad"></div>
+        <div id="touchStick" class="touch-stick"></div>
+    </div>
+
+    <canvas id="game"></canvas>
+
+    <script src="main.js"></script>
+</body>
+</html>
