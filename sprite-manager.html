@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprite Manager</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: rgba(15, 23, 42, 0.9);
+            --panel-border: rgba(148, 163, 184, 0.22);
+            --card: rgba(15, 23, 42, 0.88);
+            --accent: #7dd3fc;
+            --accent-2: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #e5e7eb;
+            --muted: #cbd5e1;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background: linear-gradient(180deg, #020817 0%, #0f172a 100%);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            padding: 20px 16px 48px;
+        }
+
+        .page {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.3);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0 16px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            background: rgba(148, 163, 184, 0.09);
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .warning {
+            background: rgba(251, 191, 36, 0.08);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            color: var(--warning);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            line-height: 1.45;
+        }
+
+        .upload-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .upload-button,
+        .action-button,
+        .remove-button {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, var(--accent), #38bdf8);
+            color: #08111e;
+        }
+
+        .action-button {
+            background: linear-gradient(135deg, var(--accent-2), #10b981);
+            color: #02130d;
+        }
+
+        .action-button.secondary {
+            background: rgba(148, 163, 184, 0.12);
+            border: 1px solid var(--panel-border);
+            color: var(--text);
+        }
+
+        .status {
+            min-height: 24px;
+            color: var(--muted);
+            margin-top: 8px;
+            font-size: 0.95rem;
+        }
+
+        .sprite-list {
+            margin-top: 20px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .sprite-card {
+            display: grid;
+            grid-template-columns: minmax(120px, 160px) 1fr auto;
+            gap: 16px;
+            align-items: start;
+            background: var(--card);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .preview-wrap {
+            width: 100%;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .preview-wrap img {
+            display: block;
+            max-width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+        }
+
+        .sprite-form {
+            display: grid;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        label {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        input, select {
+            width: 100%;
+            margin-top: 6px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 10px;
+            color: var(--text);
+            min-height: 42px;
+            padding: 10px 12px;
+            font-size: 0.98rem;
+        }
+
+        input[readonly] {
+            opacity: 0.82;
+        }
+
+        .frame-config {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .frame-config.is-hidden {
+            display: none;
+        }
+
+        .muted-note {
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .remove-button {
+            background: rgba(248, 113, 113, 0.12);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            color: #fecaca;
+            align-self: stretch;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            border: 1px dashed rgba(148, 163, 184, 0.25);
+            border-radius: 16px;
+            padding: 22px 18px;
+            margin-top: 8px;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        @media (max-width: 720px) {
+            .sprite-card {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <h1>Sprite Manager</h1>
+            <a class="back-link" href="index.html">Back to game</a>
+        </div>
+
+        <div class="panel">
+            <div class="warning">
+                This browser cannot write PNG files directly into the repository on GitHub.
+                This tool only previews, labels, and exports a ZIP/manifest for your phone workflow.
+            </div>
+
+            <div class="upload-row">
+                <input id="fileInput" class="upload-input" type="file" accept="image/png" multiple>
+                <label for="fileInput" class="upload-button">Upload Sprite</label>
+                <span class="muted-note">PNG only • one or many images</span>
+            </div>
+
+            <div id="status" class="status" aria-live="polite"></div>
+
+            <div id="spriteList" class="sprite-list" aria-live="polite"></div>
+
+            <div class="actions">
+                <button id="downloadJson" class="action-button secondary" type="button">Download Sprite Plan (.json)</button>
+                <button id="downloadZip" class="action-button" type="button">Download ZIP Bundle</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const spriteList = document.getElementById('spriteList');
+        const statusEl = document.getElementById('status');
+        const spriteState = [];
+
+        function setStatus(message, isError = false) {
+            statusEl.textContent = message;
+            statusEl.style.color = isError ? '#fca5a5' : '#cbd5e1';
+        }
+
+        function sanitizeName(value) {
+            return String(value || 'sprite')
+                .toLowerCase()
+                .replace(/\.[^.]+$/, '')
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '') || 'sprite';
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function clampNumber(value, min, max) {
+            return Math.min(Math.max(Number(value) || min, min), max);
+        }
+
+        function applyFolderRules(sprite) {
+            if (sprite.folder === 'dummy' || sprite.folder === 'temmie') {
+                sprite.idleFrames = 1;
+                sprite.projectileFrames = 0;
+                return;
+            }
+
+            if (sprite.folder === 'froggit' || sprite.folder === 'hathy') {
+                sprite.idleFrames = clampNumber(sprite.idleFrames, 1, 24);
+                sprite.projectileFrames = 0;
+                return;
+            }
+
+            if (sprite.folder === 'rudinn') {
+                sprite.idleFrames = clampNumber(sprite.idleFrames, 1, 24);
+                sprite.projectileFrames = clampNumber(sprite.projectileFrames, 0, 24);
+            }
+        }
+
+        function spriteCardTemplate(sprite, index) {
+            const isRudinn = sprite.folder === 'rudinn';
+            const isFixedOneFrame = sprite.folder === 'dummy' || sprite.folder === 'temmie';
+            const isMultipleIdle = sprite.folder === 'froggit' || sprite.folder === 'hathy';
+
+            return `
+                <div class="preview-wrap">
+                    <img src="${sprite.dataUrl}" alt="${escapeHtml(sprite.file.name)}" />
+                </div>
+
+                <div class="sprite-form">
+                    <div class="field-row">
+                        <div>
+                            <label>File name</label>
+                            <input type="text" value="${escapeHtml(sprite.file.name)}" readonly>
+                        </div>
+
+                        <div>
+                            <label>Character folder</label>
+                            <select class="folderSelect">
+                                <option value="froggit" ${sprite.folder === 'froggit' ? 'selected' : ''}>Froggit</option>
+                                <option value="dummy" ${sprite.folder === 'dummy' ? 'selected' : ''}>Dummy</option>
+                                <option value="temmie" ${sprite.folder === 'temmie' ? 'selected' : ''}>Temmie</option>
+                                <option value="hathy" ${sprite.folder === 'hathy' ? 'selected' : ''}>Hathy</option>
+                                <option value="rudinn" ${sprite.folder === 'rudinn' ? 'selected' : ''}>Rudinn</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="frame-config ${isFixedOneFrame ? 'is-hidden' : ''}">
+                        <div>
+                            <label>Idle frames</label>
+                            <input class="idleFrames" type="number" min="1" max="24" value="${sprite.idleFrames}" ${isFixedOneFrame ? 'disabled' : ''}>
+                        </div>
+                        <div class="${isRudinn ? '' : 'is-hidden'}">
+                            <label>Projectile frames</label>
+                            <input class="projectileFrames" type="number" min="0" max="24" value="${sprite.projectileFrames}" ${isRudinn ? '' : 'disabled'}>
+                        </div>
+                    </div>
+
+                    <div class="muted-note">
+                        ${isFixedOneFrame ? 'Single idle sprite only for this character.' : isMultipleIdle ? 'Multiple idle frames allowed for this character.' : 'Use idle and projectile sprite slots for Rudinn.'}
+                    </div>
+                </div>
+
+                <button class="remove-button" type="button" data-index="${index}">Remove</button>
+            `;
+        }
+
+        function renderSprites() {
+            if (spriteState.length === 0) {
+                spriteList.innerHTML = '<div class="empty-state">No sprites uploaded yet. Tap “Upload Sprite” to add PNG files.</div>';
+                return;
+            }
+
+            spriteList.innerHTML = spriteState.map(spriteCardTemplate).join('');
+
+            spriteList.querySelectorAll('.folderSelect').forEach((select) => {
+                select.addEventListener('change', (event) => {
+                    const index = Number(event.target.closest('.sprite-card')?.querySelector('.remove-button')?.dataset.index ?? 0);
+                    const sprite = spriteState[index];
+                    sprite.folder = event.target.value;
+                    applyFolderRules(sprite);
+                    renderSprites();
+                });
+            });
+
+            spriteList.querySelectorAll('.idleFrames').forEach((input) => {
+                input.addEventListener('input', (event) => {
+                    const index = Number(event.target.closest('.sprite-card')?.querySelector('.remove-button')?.dataset.index ?? 0);
+                    const sprite = spriteState[index];
+                    sprite.idleFrames = clampNumber(event.target.value, 1, 24);
+                    applyFolderRules(sprite);
+                    renderSprites();
+                });
+            });
+
+            spriteList.querySelectorAll('.projectileFrames').forEach((input) => {
+                input.addEventListener('input', (event) => {
+                    const index = Number(event.target.closest('.sprite-card')?.querySelector('.remove-button')?.dataset.index ?? 0);
+                    const sprite = spriteState[index];
+                    sprite.projectileFrames = clampNumber(event.target.value, 0, 24);
+                    applyFolderRules(sprite);
+                    renderSprites();
+                });
+            });
+
+            spriteList.querySelectorAll('.remove-button').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const index = Number(button.dataset.index);
+                    spriteState.splice(index, 1);
+                    renderSprites();
+                    setStatus('Sprite removed from the current sprite set.');
+                });
+            });
+        }
+
+        function readFileDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(new Error('Could not read the selected PNG file.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleFiles(fileList) {
+            const files = Array.from(fileList || []).filter((file) => file.type === 'image/png' || file.name.toLowerCase().endsWith('.png'));
+
+            if (files.length === 0) {
+                setStatus('No PNG files were selected.', true);
+                return;
+            }
+
+            for (const file of files) {
+                try {
+                    const dataUrl = await readFileDataUrl(file);
+                    spriteState.push({
+                        file,
+                        dataUrl,
+                        folder: 'froggit',
+                        idleFrames: 1,
+                        projectileFrames: 0,
+                    });
+                } catch (error) {
+                    setStatus(error.message, true);
+                    return;
+                }
+            }
+
+            spriteState.forEach(applyFolderRules);
+            renderSprites();
+            setStatus(`${files.length} PNG file(s) loaded. Choose every character folder and export the asset package.`);
+        }
+
+        fileInput.addEventListener('change', (event) => {
+            handleFiles(event.target.files);
+            event.target.value = '';
+        });
+
+        function dataUrlToUint8Array(dataUrl) {
+            const base64 = dataUrl.split(',')[1];
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i += 1) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        function buildExportPayload() {
+            return spriteState.map((sprite, index) => {
+                const folder = sprite.folder;
+                const idleFrames = folder === 'dummy' || folder === 'temmie' ? 1 : sprite.idleFrames;
+                const projectileFrames = folder === 'rudinn' ? sprite.projectileFrames : 0;
+
+                return {
+                    id: index + 1,
+                    originalName: sprite.file.name,
+                    folder,
+                    idleFrames,
+                    projectileFrames,
+                    generatedFiles: buildSpriteFileNames(sprite, folder),
+                };
+            });
+        }
+
+        function buildSpriteFileNames(sprite, folder) {
+            const base = `assets/characters/${folder}/`;
+            const idleCount = folder === 'dummy' || folder === 'temmie' ? 1 : sprite.idleFrames;
+            const projectileCount = folder === 'rudinn' ? sprite.projectileFrames : 0;
+            const entries = [];
+
+            if (folder === 'froggit' || folder === 'hathy') {
+                for (let i = 0; i < idleCount; i += 1) {
+                    entries.push(`${base}${folder}_idle_${String(i + 1).padStart(2, '0')}.png`);
+                }
+                return entries;
+            }
+
+            if (folder === 'dummy' || folder === 'temmie') {
+                entries.push(`${base}${folder}_idle_01.png`);
+                return entries;
+            }
+
+            for (let i = 0; i < idleCount; i += 1) {
+                entries.push(`${base}rudinn_idle_${String(i + 1).padStart(2, '0')}.png`);
+            }
+
+            for (let i = 0; i < projectileCount; i += 1) {
+                entries.push(`${base}rudinn_projectile_${String(i + 1).padStart(2, '0')}.png`);
+            }
+
+            return entries;
+        }
+
+        function downloadBlob(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1200);
+        }
+
+        function generateJsonExport() {
+            if (spriteState.length === 0) {
+                setStatus('Upload at least one PNG before exporting.', true);
+                return;
+            }
+
+            const payload = buildExportPayload();
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            downloadBlob(blob, 'sprite-export-plan.json');
+            setStatus('Sprite plan exported as JSON.');
+        }
+
+        async function generateZipExport() {
+            if (spriteState.length === 0) {
+                setStatus('Upload at least one PNG before exporting.', true);
+                return;
+            }
+
+            if (!window.JSZip) {
+                setStatus('The ZIP library did not load. Try the JSON plan export instead.', true);
+                return;
+            }
+
+            const zip = new JSZip();
+            const manifest = buildExportPayload();
+            zip.file('sprite-manager-manifest.json', JSON.stringify(manifest, null, 2));
+
+            spriteState.forEach((sprite) => {
+                const folder = sprite.folder;
+                const idleCount = folder === 'dummy' || folder === 'temmie' ? 1 : sprite.idleFrames;
+                const projectileCount = folder === 'rudinn' ? sprite.projectileFrames : 0;
+
+                if (folder === 'froggit' || folder === 'hathy') {
+                    for (let i = 0; i < idleCount; i += 1) {
+                        zip.file(`assets/characters/${folder}/${folder}_idle_${String(i + 1).padStart(2, '0')}.png`, dataUrlToUint8Array(sprite.dataUrl), { binary: true });
+                    }
+                    return;
+                }
+
+                if (folder === 'dummy' || folder === 'temmie') {
+                    zip.file(`assets/characters/${folder}/${folder}_idle_01.png`, dataUrlToUint8Array(sprite.dataUrl), { binary: true });
+                    return;
+                }
+
+                for (let i = 0; i < idleCount; i += 1) {
+                    zip.file(`assets/characters/${folder}/rudinn_idle_${String(i + 1).padStart(2, '0')}.png`, dataUrlToUint8Array(sprite.dataUrl), { binary: true });
+                }
+
+                for (let i = 0; i < projectileCount; i += 1) {
+                    zip.file(`assets/characters/${folder}/rudinn_projectile_${String(i + 1).padStart(2, '0')}.png`, dataUrlToUint8Array(sprite.dataUrl), { binary: true });
+                }
+            });
+
+            const blob = await zip.generateAsync({ type: 'blob' });
+            downloadBlob(blob, 'sprite-export-bundle.zip');
+            setStatus('ZIP bundle exported to your device.');
+        }
+
+        document.getElementById('downloadJson').addEventListener('click', generateJsonExport);
+        document.getElementById('downloadZip').addEventListener('click', generateZipExport);
+
+        renderSprites();
+        setStatus('Upload PNG files from your phone to organize them into the character folders.');
+    </script>
+</body>
+</html>
